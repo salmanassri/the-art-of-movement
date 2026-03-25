@@ -1,54 +1,53 @@
 # The Art of Motion
 
-An interactive art installation that responds to your body movements. Move in front of the camera and watch colorful particles flow and dance, creating unique patterns with every gesture. **The Art of Motion** uses your webcam to detect your movements and transforms them into flowing particle animations. It's a generative art piece that creates something different every time, influenced by how you move. Created by **RGB Trio** for an Algorithmic Art course vernissage.
+An interactive art installation that uses your webcam and body pose detection to let you sculpt flowing particle animations with your hands. Created by **RGB Trio** for an Algorithmic Art course vernissage.
+
+## What Is This?
+
+**The Art of Motion** is a generative art piece inspired by [Studio ANF's Hyperschwarm](https://studioanf.com/project/hyperschwarm-generative-art-installation). Thousands of glowing particles flow across the screen, driven by a Perlin noise flow field. Using ml5.js pose detection (BlazePose), your hand movements warp and reshape the particle streams in real time — every performance is unique.
+
+### Interactions
+
+- **Flow distortion** — Move your hands to bend and pull streams of particles toward you. The closer particles are to your wrists, the stronger the pull.
+- **Particle bursts** — Clasp both hands together to trigger an explosion of particles from the contact point. Separate your hands and clasp again to repeat.
+- **Keyboard controls:**
+  - **D** — Toggle wrist debug markers on/off
+  - **Space** / **R** — Reset the canvas with a new flow field and color palette
 
 ## Installation & Setup
 
 ### Prerequisites
-- Node.js (v14 or higher) or any local server
+- Any local server (Python, Node.js, etc.)
 - Modern web browser with webcam access
 
 ### Quick Start
 
 1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/kinetic-canvas.git
-   cd kinetic-canvas
-   ```
+
+```bash
+git clone https://github.com/yourusername/the-art-of-motion.git
+cd the-art-of-motion
+```
 
 2. **Run a local server**
-   ```bash
-   # Using Python 3
-   python -m http.server 8000
-   
-   # Or using Node.js (http-server)
-   npx http-server
-   ```
+
+```bash
+# Using Python 3
+python3 -m http.server 8000
+
+# Or using Node.js
+npx http-server
+```
 
 3. **Open in browser**
    Navigate to `http://localhost:8000` and allow camera access when prompted.
 
 ### Dependencies
-- [p5.js](https://p5js.org/) – Graphics and animation
-- [ml5.js](https://learn.ml5js.org/) – Machine learning for pose estimation
-- [TensorFlow.js](https://www.tensorflow.org/js) – Backend for ml5 (loaded automatically)
+- [p5.js](https://p5js.org/) — Graphics and animation
+- [ml5.js](https://learn.ml5js.org/) — Machine learning for pose estimation (BlazePose)
+- [TensorFlow.js](https://www.tensorflow.org/js) — Backend for ml5 (loaded automatically)
 
-All dependencies are loaded via CDN—no npm installation required.
-
-## How to Use It
-
-1. Open the app in your browser (see setup above)
-2. Allow camera access
-3. Stand in front of your camera and move
-4. Watch the particles respond to your motion
-
-
-## Future Ideas
-
-- Add sound that reacts to movement
-- Let multiple people interact at once
-- Save frames or record videos
-- Different visual modes (slow, chaotic, meditative)
+All dependencies are loaded via CDN — no npm installation required.
 
 ## Credits
 
@@ -59,4 +58,4 @@ All dependencies are loaded via CDN—no npm installation required.
 
 **Course:** Algorithmic Art (Vernissage Project)
 
-**Built with:** p5.js, ml5.js
+**Built with:** p5.js, ml5.js (BlazePose)
