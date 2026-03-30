@@ -352,24 +352,27 @@ function updateBurstParticles() {
   }
 }
 
+// draws each burst particle as a glowing dot with a soft halo
 function displayBurstParticles(globalHue) {
   noStroke();
   blendMode(ADD);
   for (const bp of burstParticles) {
-    const t = bp.life / bp.maxLife;
+    const t = bp.life / bp.maxLife; // normalized life of the particle (0-1)
+     // makes particles ramp in quickly at birth (first 10% of life progression), then stay at full
     const fadeIn = constrain(1 - bp.life / bp.maxLife, 0, 1) < 0.1 ? (1 - bp.life / bp.maxLife) / 0.1 : 1;
-    const a = t * fadeIn * 18;
-    const b = 70 + 30 * t;
+    const a = t * fadeIn * 18; // compute alpha (strong early, then fades as t drops)
+    const b = 70 + 30 * t; // compute brightness (bright early, then fades as t drops)
 
-    fill(bp.hue, 45, b, a * 0.25);
-    circle(bp.x, bp.y, bp.r * 3.5);
+    fill(bp.hue, 45, b, a * 0.25); // fill with color and alpha
+    circle(bp.x, bp.y, bp.r * 3.5); // cirlce with soft halo
 
-    fill(bp.hue, 40, b, a);
-    circle(bp.x, bp.y, bp.r);
+    fill(bp.hue, 40, b, a); // fill with color and alpha
+    circle(bp.x, bp.y, bp.r); // draw the particle as a circle
   }
-  blendMode(BLEND);
+  blendMode(BLEND); // reset blend mode to normal
 }
 
+// this function iterpolate smoothly from angle a toward angle b by fraction t
 function lerpAngle(a, b, t) {
   let diff = b - a;
   while (diff > PI) diff -= TWO_PI;
