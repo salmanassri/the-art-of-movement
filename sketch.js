@@ -35,6 +35,7 @@ const BURST_LIFESPAN = 150;
 function preload() {
   // bodyPose = ml5.bodyPose("MoveNet"); // load the MoveNet model
   bodyPose = ml5.bodyPose("BlazePose"); // load the PoseNet model
+  // bodyPose = ml5.bodyPose("MoveNet", { modelType: "SINGLEPOSE_THUNDER" });
 }
 
 // callback function to keep the poses array updated every frame
@@ -241,31 +242,32 @@ class SwarmLayer {
 
 function spawnBurst(x, y, globalHue) {
   for (let i = 0; i < BURST_COUNT; i++) {
-    const angle = random(TWO_PI);
-    const spd = random(2, 5);
+    const angle = random(TWO_PI); // random direction angle for each particle
+    const spd = random(2, 5); // random speed for each particle
     burstParticles.push({
-      x: x + random(-8, 8),
-      y: y + random(-8, 8),
-      vx: cos(angle) * spd,
-      vy: sin(angle) * spd,
+      x: x + random(-8, 8), // random x offset from the center of the burst
+      y: y + random(-8, 8), // random y offset from the center of the burst
+      vx: cos(angle) * spd, // x velocity based on the angle and speed
+      vy: sin(angle) * spd, // y velocity based on the angle and speed
       life: BURST_LIFESPAN,
       maxLife: BURST_LIFESPAN,
       hue: (globalHue + random(-30, 30)) % 360,
-      r: random(2, 7),
+      r: random(2, 7), // random radius for each particle
     });
   }
 }
 
 function updateBurstParticles() {
+  // loop backwards through the burst particles array to safely remove items during iteration
   for (let i = burstParticles.length - 1; i >= 0; i--) {
     const bp = burstParticles[i];
-    bp.vx *= 0.97;
-    bp.vy *= 0.97;
-    bp.x += bp.vx;
-    bp.y += bp.vy;
-    bp.life--;
+    bp.vx *= 0.97; // gradually reduce the velocity of the particle
+    bp.vy *= 0.97; // gradually reduce the velocity of the particle
+    bp.x += bp.vx; // move particle by current velocity
+    bp.y += bp.vy; // move particle by current velocity
+    bp.life--; // decrement life of particle by 1 frame
     if (bp.life <= 0 || bp.x < -20 || bp.x > W + 20 || bp.y < -20 || bp.y > H + 20) {
-      burstParticles.splice(i, 1);
+      burstParticles.splice(i, 1); // remove particle from array if it's off the screen or has no life left
     }
   }
 }
