@@ -29,13 +29,12 @@ const WRIST_IMG_DISPLAY_W = 40;
 
 let wristImg;
 
-let burstParticles = [];
 const CLASP_DISTANCE = 80;
 const CLASP_COOLDOWN = 30;
 let claspReady = true;
 let claspCooldownTimer = 0;
+/** New particles spawned on clasp; they are added to swarm layers and share the same flow + motion */
 const BURST_COUNT = 35;
-const BURST_LIFESPAN = 150;
 
 function preload() {
   wristImg = loadImage("hand.png");
@@ -131,9 +130,6 @@ function draw() {
     layer.update(zFlow, globalHue, activeKeypoints);
     layer.display(globalHue);
   }
-
-  updateBurstParticles();
-  displayBurstParticles(globalHue);
 
   if (showDebug) {
     drawDebugSkeleton();
@@ -246,54 +242,37 @@ class SwarmLayer {
   }
 }
 
-function spawnBurst(x, y, globalHue) {
-  for (let i = 0; i < BURST_COUNT; i++) {
-    const angle = random(TWO_PI); // random direction angle for each particle
-    const spd = random(2, 5); // random speed for each particle
-    burstParticles.push({
-      x: x + random(-8, 8), // random x offset from the center of the burst
-      y: y + random(-8, 8), // random y offset from the center of the burst
-      vx: cos(angle) * spd, // x velocity based on the angle and speed
-      vy: sin(angle) * spd, // y velocity based on the angle and speed
-      life: BURST_LIFESPAN,
-      maxLife: BURST_LIFESPAN,
-      hue: (globalHue + random(-30, 30)) % 360,
-      r: random(2, 7), // random radius for each particle
-    });
-  }
+function hueJitterFromBurstHue(globalHue, burstHue) {
+  let hj = burstHue - globalHue;
+  if (hj > 180) hj -= 360;
+  if (hj < -180) hj += 360;
+  return hj;
 }
 
-function updateBurstParticles() {
-  // loop backwards through the burst particles array to safely remove items during iteration
-  for (let i = burstParticles.length - 1; i >= 0; i--) {
-    const bp = burstParticles[i];
-    bp.vx *= 0.97; // gradually reduce the velocity of the particle
-    bp.vy *= 0.97; // gradually reduce the velocity of the particle
-    bp.x += bp.vx; // move particle by current velocity
-    bp.y += bp.vy; // move particle by current velocity
-    bp.life--; // decrement life of particle by 1 frame
-    if (bp.life <= 0 || bp.x < -20 || bp.x > W + 20 || bp.y < -20 || bp.y > H + 20) {
-      burstParticles.splice(i, 1); // remove particle from array if it's off the screen or has no life left
+function spawnBurst(x, y, globalHue) {
+  const nLayers = layers.length;
+  if (nLayers === 0) return;
+
+  let remaining = BURST_COUNT;
+  for (let L = 0; L < nLayers; L++) {
+    const count = L === nLayers - 1 ? remaining : floor(BURST_COUNT / nLayers);
+    remaining -= count;
+    const layer = layers[L];
+    for (let i = 0; i < count; i++) {
+      const angle = random(TWO_PI);
+      const spd = random(2, 5);
+      const burstHue = (globalHue + random(-30, 30)) % 360;
+      layer.particles.push({
+        x: x + random(-8, 8),
+        y: y + random(-8, 8),
+        vx: cos(angle) * spd,
+        vy: sin(angle) * spd,
+        hueJitter: hueJitterFromBurstHue(globalHue, burstHue),
+        satJitter: random(-12, 18),
+        briJitter: random(-10, 15),
+      });
     }
   }
-}
-
-function displayBurstParticles(globalHue) {
-  noStroke();
-  blendMode(ADD);
-  for (const bp of burstParticles) {
-    const t = bp.life / bp.maxLife;
-    const fadeIn = constrain(1 - bp.life / bp.maxLife, 0, 1) < 0.1 ? (1 - bp.life / bp.maxLife) / 0.1 : 1;
-    const a = t * fadeIn * 18;
-    const b = 70 + 30 * t;
-
-    fill(bp.hue, 45, b, a * 0.25);
-    circle(bp.x, bp.y, bp.r * 3.5);
-
-    fill(bp.hue, 40, b, a);
-    circle(bp.x, bp.y, bp.r);
-  }
-  blendMode(BLEND);
 }
 
 function lerpAngle(a, b, t) {
