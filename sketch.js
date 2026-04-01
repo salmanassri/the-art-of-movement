@@ -24,6 +24,11 @@ const MIN_CONFIDENCE = 0.3; // minimum confidence level for a keypoint to be con
 
 let showDebug = true;
 
+/** Display size (width in px) for wrist marker image in debug overlay */
+const WRIST_IMG_DISPLAY_W = 40;
+
+let wristImg;
+
 let burstParticles = [];
 const CLASP_DISTANCE = 80;
 const CLASP_COOLDOWN = 30;
@@ -33,6 +38,7 @@ const BURST_COUNT = 35;
 const BURST_LIFESPAN = 150;
 
 function preload() {
+  wristImg = loadImage("hand.png");
   // bodyPose = ml5.bodyPose("MoveNet"); // load the MoveNet model
   bodyPose = ml5.bodyPose("BlazePose"); // load the PoseNet model
   // bodyPose = ml5.bodyPose("MoveNet", { modelType: "SINGLEPOSE_THUNDER" });
@@ -298,19 +304,28 @@ function lerpAngle(a, b, t) {
 }
 
 function drawDebugSkeleton() {
+  if (!wristImg || wristImg.width <= 0) return;
+
+  const displayH = WRIST_IMG_DISPLAY_W * (wristImg.height / wristImg.width);
+  imageMode(CENTER);
+  noStroke();
+
   for (const pose of poses) {
     for (const kp of pose.keypoints) {
       if (kp.confidence > MIN_CONFIDENCE && (kp.name === "left_wrist" || kp.name === "right_wrist")) {
         const x = W - kp.x;
         const y = kp.y;
-        noStroke();
-        fill(0, 0, 100, 30);
-        circle(x, y, 18);
-        fill(0, 0, 100, 60);
-        circle(x, y, 8);
+        push();
+        translate(x, y);
+        // Mirror one wrist so a directional hand asset reads correctly on both sides
+        if (kp.name === "left_wrist") scale(-1, 1);
+        image(wristImg, 0, 0, WRIST_IMG_DISPLAY_W, displayH);
+        pop();
       }
     }
   }
+
+  imageMode(CORNER);
 }
 
 function keyPressed() {
