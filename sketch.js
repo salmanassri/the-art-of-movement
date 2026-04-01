@@ -34,11 +34,14 @@ let claspCooldownTimer = 0;
 const BURST_COUNT = 35;
 const BURST_LIFESPAN = 150;
 
+const TITLE_COPY = "The Art of Movement";
+const TITLE_FONT = "Noto Serif JP";
+
 function preload() {
   wristImg = loadImage("hand.png");
   // bodyPose = ml5.bodyPose("MoveNet"); // load the MoveNet model
-  bodyPose = ml5.bodyPose("BlazePose"); // load the PoseNet model
-  // bodyPose = ml5.bodyPose("MoveNet", { modelType: "SINGLEPOSE_THUNDER" });
+  // bodyPose = ml5.bodyPose("BlazePose"); // load the PoseNet model
+  bodyPose = ml5.bodyPose("MoveNet", { modelType: "SINGLEPOSE_THUNDER" });
 }
 
 // callback function to keep the poses array updated every frame
@@ -73,7 +76,7 @@ function setup() {
 function draw() {
   // Fade previous frame (new marks blend over the last set)
   noStroke();
-  fill(0, 0, 0, 8);
+  fill(0, 0, 0, 6);
   rect(0, 0, width, height);
 
   // Update the depth of the flow field, the drift of the hue, and the phase of the palette
@@ -136,6 +139,26 @@ function draw() {
   if (showDebug) {
     drawDebugSkeleton();
   }
+
+  drawTitle();
+}
+
+function drawTitle() {
+  push();
+  textFont(TITLE_FONT);
+  textStyle(NORMAL);
+  textAlign(CENTER, TOP);
+  textSize(constrain(width * 0.002, 28, 64));
+
+  const tx = width * 0.5;
+  const ty = height * 0.045;
+  noStroke();
+
+  fill(0, 0, 0, 40);
+  text(TITLE_COPY, tx + 2, ty + 2);
+  fill(42, 10, 97, 96);
+  text(TITLE_COPY, tx, ty);
+  pop();
 }
 
 class SwarmLayer {
