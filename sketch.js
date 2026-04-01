@@ -38,7 +38,7 @@ const TITLE_COPY = "The Art of Movement";
 const TITLE_FONT = "Noto Serif JP";
 
 /** Full sketch reset on a timer (matches fresh setup: flow, palette, particles, canvas). */
-const RESET_INTERVAL_MS = 3 * 60 * 1000;
+const RESET_INTERVAL_MS = 1.5 * 60 * 1000;
 let lastSketchResetMs = 0;
 
 function preload() {
