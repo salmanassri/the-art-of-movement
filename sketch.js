@@ -3,9 +3,6 @@
  * Reference: https://studioanf.com/project/hyperschwarm-generative-art-installation
  */
 
-const W = 960;
-const H = 720;
-
 let layers = []; // array of swarm layers
 let zFlow = 0; // depth of the flow field
 let hueAnchor = 0; // base hue for the palette
@@ -50,13 +47,13 @@ function gotPoses(results) {
 }
 
 function setup() {
-  createCanvas(W, H);
+  createCanvas(windowWidth, windowHeight);
   colorMode(HSB, 360, 100, 100, 100);
   randomSeed(floor(random(1e9)));
   noiseSeed(floor(random(1e9)));
 
   video = createCapture(VIDEO); // hidden video capture object 
-  video.size(W, H); // set the size of the video capture object to the canvas size
+  video.size(windowWidth, windowHeight); // set the size of the video capture object to the canvas size
   video.hide(); 
   bodyPose.detectStart(video, gotPoses); // start the body pose detection
 
@@ -98,7 +95,8 @@ function draw() {
   for (const pose of poses) {
     for (const kp of pose.keypoints) {
       if (kp.confidence > MIN_CONFIDENCE && (kp.name === "left_wrist" || kp.name === "right_wrist")) {
-        const mx = W - kp.x;
+        // Mirror to match a front-facing webcam; use canvas width so coords match video.size(windowWidth, windowHeight).
+        const mx = width - kp.x;
         const my = kp.y;
         activeKeypoints.push({ x: mx, y: my });
         if (kp.name === "left_wrist") leftWrist = { x: mx, y: my };
@@ -150,12 +148,12 @@ class SwarmLayer {
    * @param {number} curl - extra swirl from secondary noise
    */
   constructor(n, maxSpeed, r, alpha, noiseScale, curl) {
-    this.particles = []; 
+    this.particles = [];
     this.maxSpeed = maxSpeed;
     this.r = r;
-    this.alpha = alpha; 
-    this.noiseScale = noiseScale; 
-    this.curl = curl; 
+    this.alpha = alpha;
+    this.noiseScale = noiseScale;
+    this.curl = curl;
     // Initialize the particles in the layer with random positions, velocities, and color jitter
     for (let i = 0; i < n; i++) {
       this.particles.push({
@@ -272,7 +270,7 @@ function updateBurstParticles() {
     bp.x += bp.vx; // move particle by current velocity
     bp.y += bp.vy; // move particle by current velocity
     bp.life--; // decrement life of particle by 1 frame
-    if (bp.life <= 0 || bp.x < -20 || bp.x > W + 20 || bp.y < -20 || bp.y > H + 20) {
+    if (bp.life <= 0 || bp.x < -20 || bp.x > width + 20 || bp.y < -20 || bp.y > height + 20) {
       burstParticles.splice(i, 1); // remove particle from array if it's off the screen or has no life left
     }
   }
@@ -313,7 +311,7 @@ function drawDebugSkeleton() {
   for (const pose of poses) {
     for (const kp of pose.keypoints) {
       if (kp.confidence > MIN_CONFIDENCE && (kp.name === "left_wrist" || kp.name === "right_wrist")) {
-        const x = W - kp.x;
+        const x = width - kp.x;
         const y = kp.y;
         push();
         translate(x, y);
