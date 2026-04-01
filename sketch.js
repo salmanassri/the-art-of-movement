@@ -27,7 +27,7 @@ const WRIST_IMG_DISPLAY_W = 40;
 let wristImg;
 
 let burstParticles = [];
-const CLASP_DISTANCE = 80;
+const CLASP_DISTANCE = 100;
 const CLASP_COOLDOWN = 30;
 let claspReady = true;
 let claspCooldownTimer = 0;
@@ -36,6 +36,10 @@ const BURST_LIFESPAN = 150;
 
 const TITLE_COPY = "The Art of Movement";
 const TITLE_FONT = "Noto Serif JP";
+
+/** Full sketch reset on a timer (matches fresh setup: flow, palette, particles, canvas). */
+const RESET_INTERVAL_MS = 3 * 60 * 1000;
+let lastSketchResetMs = 0;
 
 function preload() {
   wristImg = loadImage("hand.png");
@@ -71,9 +75,38 @@ function setup() {
   );
 
   background(0, 0, 6);
+  lastSketchResetMs = millis();
+}
+
+/** Resets generative state and canvas to the same baseline as a new run (video/pose unchanged). */
+function resetSketchToInitial() {
+  noiseSeed(floor(random(1e9)));
+  randomSeed(floor(random(1e9)));
+  zFlow = 0;
+  hueDrift = 0;
+  palettePhase = 0;
+  hueAnchor = random(360);
+  nextPaletteAt = frameCount + int(random(400, 900));
+  for (const layer of layers) {
+    for (const p of layer.particles) {
+      p.x = random(width);
+      p.y = random(height);
+      p.vx = random(-0.5, 0.5);
+      p.vy = random(-0.5, 0.5);
+    }
+  }
+  burstParticles = [];
+  claspReady = true;
+  claspCooldownTimer = 0;
+  background(0, 0, 6);
 }
 
 function draw() {
+  if (millis() - lastSketchResetMs >= RESET_INTERVAL_MS) {
+    resetSketchToInitial();
+    lastSketchResetMs = millis();
+  }
+
   // Fade previous frame (new marks blend over the last set)
   noStroke();
   fill(0, 0, 0, 6);
@@ -355,17 +388,7 @@ function keyPressed() {
   }
   // Reset the sketch if the space bar, r, or R key is pressed
   if (key === " " || key === "r" || key === "R") {
-    noiseSeed(floor(random(1e9)));
-    randomSeed(floor(random(1e9)));
-    hueAnchor = random(360);
-    for (const layer of layers) {
-      for (const p of layer.particles) {
-        p.x = random(width);
-        p.y = random(height);
-        p.vx = random(-0.5, 0.5);
-        p.vy = random(-0.5, 0.5);
-      }
-    }
-    background(0, 0, 6);
+    resetSketchToInitial();
+    lastSketchResetMs = millis();
   }
 }
