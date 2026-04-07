@@ -34,6 +34,18 @@ let claspCooldownTimer = 0;
 const BURST_COUNT = 35;
 const BURST_LIFESPAN = 150;
 
+let claspSynth;
+let swipeSynth;
+let motionReverb;
+let audioInitialized = false;
+let audioReady = false;
+
+const SWIPE_SPEED_THRESHOLD = 24;
+const SWIPE_COOLDOWN = 14;
+let swipeCooldownTimer = 0;
+let prevLeftWrist = null;
+let prevRightWrist = null;
+
 const TITLE_COPY = "The Art of Movement";
 const TITLE_FONT = "Noto Serif JP";
 
@@ -58,6 +70,7 @@ function setup() {
   colorMode(HSB, 360, 100, 100, 100);
   randomSeed(floor(random(1e9)));
   noiseSeed(floor(random(1e9)));
+  initAudioEngine();
 
   video = createCapture(VIDEO); // hidden video capture object 
   video.size(windowWidth, windowHeight); // set the size of the video capture object to the canvas size
@@ -154,12 +167,15 @@ function draw() {
       const cx = (leftWrist.x + rightWrist.x) / 2;
       const cy = (leftWrist.y + rightWrist.y) / 2;
       spawnBurst(cx, cy, globalHue);
+      triggerClaspSound(globalHue, handDist);
       claspReady = false;
       claspCooldownTimer = CLASP_COOLDOWN;
     } else if (handDist > CLASP_DISTANCE * 2) {
       claspReady = true;
     }
   }
+
+  detectSwipeGesture(leftWrist, rightWrist, globalHue);
 
   for (const layer of layers) {
     layer.update(zFlow, globalHue, activeKeypoints);
@@ -168,6 +184,14 @@ function draw() {
 
   updateBurstParticles();
   displayBurstParticles(globalHue);
+
+  if (!audioReady) {
+    noStroke();
+    fill(0, 0, 100, 70);
+    textAlign(CENTER, CENTER);
+    textSize(14);
+    text("Click or press a key to enable sound", width / 2, height - 26);
+  }
 
   if (showDebug) {
     drawDebugSkeleton();
@@ -192,6 +216,62 @@ function drawTitle() {
   fill(42, 10, 97, 96);
   text(TITLE_COPY, tx, ty);
   pop();
+}
+
+function initAudioEngine() {
+  claspSynth = new p5.MonoSynth();
+  swipeSynth = new p5.MonoSynth();
+  motionReverb = new p5.Reverb();
+  motionReverb.process(claspSynth, 2.8, 2);
+  motionReverb.process(swipeSynth, 1.9, 1.2);
+  audioInitialized = true;
+}
+
+function ensureAudioStarted() {
+  if (!audioInitialized) return;
+  userStartAudio();
+  const ctx = getAudioContext();
+  if (ctx && ctx.state !== "running") {
+    ctx.resume();
+  }
+  audioReady = true;
+}
+
+function triggerClaspSound(globalHue, handDist) {
+  if (!audioReady) return;
+  const hue = (globalHue + 360) % 360;
+  const midi = int(map(hue, 0, 360, 48, 76));
+  const freq = midiToFreq(midi);
+  const velocity = constrain(map(handDist, CLASP_DISTANCE, 0, 0.45, 0.95), 0.35, 0.95);
+  claspSynth.play(freq, velocity, 0, 0.2);
+}
+
+function detectSwipeGesture(leftWrist, rightWrist, globalHue) {
+  if (swipeCooldownTimer > 0) swipeCooldownTimer--;
+
+  if (leftWrist && rightWrist && prevLeftWrist && prevRightWrist) {
+    const leftSpeed = dist(leftWrist.x, leftWrist.y, prevLeftWrist.x, prevLeftWrist.y);
+    const rightSpeed = dist(rightWrist.x, rightWrist.y, prevRightWrist.x, prevRightWrist.y);
+    const speed = max(leftSpeed, rightSpeed);
+
+    if (speed > SWIPE_SPEED_THRESHOLD && swipeCooldownTimer <= 0) {
+      triggerSwipeSound(speed, globalHue);
+      swipeCooldownTimer = SWIPE_COOLDOWN;
+    }
+  }
+
+  prevLeftWrist = leftWrist ? { x: leftWrist.x, y: leftWrist.y } : null;
+  prevRightWrist = rightWrist ? { x: rightWrist.x, y: rightWrist.y } : null;
+}
+
+function triggerSwipeSound(speed, globalHue) {
+  if (!audioReady) return;
+  const speedNorm = constrain(map(speed, SWIPE_SPEED_THRESHOLD, 70, 0, 1), 0, 1);
+  const hue = (globalHue + 360) % 360;
+  const midi = int(map(speedNorm, 0, 1, 62, 90) + map(hue, 0, 360, -3, 3));
+  const freq = midiToFreq(midi);
+  const velocity = 0.2 + speedNorm * 0.5;
+  swipeSynth.play(freq, velocity, 0, 0.08);
 }
 
 class SwarmLayer {
@@ -383,6 +463,8 @@ function drawDebugSkeleton() {
 }
 
 function keyPressed() {
+  ensureAudioStarted();
+
   if (key === "d" || key === "D") {
     showDebug = !showDebug;
   }
@@ -391,4 +473,13 @@ function keyPressed() {
     resetSketchToInitial();
     lastSketchResetMs = millis();
   }
+}
+
+function mousePressed() {
+  ensureAudioStarted();
+}
+
+function touchStarted() {
+  ensureAudioStarted();
+  return false;
 }
